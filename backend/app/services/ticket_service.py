@@ -27,6 +27,7 @@ def generate_next_ticket_id(db: Session) -> str:
         next_num = int(match.group(1)) + 1
         return f"TKT-{next_num:03d}"
     except Exception as e:
+        db.rollback()
         logger.error(f"Error generating sequential ticket ID: {str(e)}")
         raise DatabaseException(e)
 
@@ -106,6 +107,10 @@ def update_ticket(db: Session, ticket_id: str, update_data: TicketUpdateRequest)
     logger.info(f"Updating ticket {ticket_id} (Status: {update_data.status})")
     try:
         ticket = get_ticket_by_id(db, ticket_id)
+
+        if not ticket:
+            logger.warning(f"Ticket not found: {ticket_id}")
+            raise TicketNotFoundException(ticket_id)
         
         # Update the ticket's status
         ticket.status = update_data.status
@@ -142,6 +147,10 @@ def delete_ticket(db: Session, ticket_id: str) -> None:
     logger.info(f"Attempting to delete ticket: {ticket_id}")
     try:
         ticket = get_ticket_by_id(db, ticket_id)
+
+        if not ticket:
+            logger.warning(f"Ticket not found: {ticket_id}")
+            raise TicketNotFoundException(ticket_id)
         
         db.delete(ticket)
         db.commit()

@@ -4,6 +4,9 @@ from app.utils.logger import logger
 
 
 class AppException(Exception):
+    """
+    Base class for all custom application-level exceptions.
+    """
     def __init__(self, status_code: int, message: str):
         self.status_code = status_code
         self.message = message
@@ -11,6 +14,9 @@ class AppException(Exception):
 
 
 class TicketNotFoundException(AppException):
+    """
+    Custom exception raised when a requested ticket cannot be found.
+    """
     def __init__(self, ticket_id: str):
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -19,6 +25,9 @@ class TicketNotFoundException(AppException):
 
 
 class DatabaseException(AppException):
+    """
+    Custom exception raised for unexpected database-related errors.
+    """
     def __init__(self, original_error: Exception):
         super().__init__(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -1,4 +1,4 @@
-from app.schemas.schemas import (
+from .schemas import (
     TicketCreate,
     TicketCreateResponse,
     TicketListResponse,

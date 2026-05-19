@@ -1,4 +1,4 @@
-from app.services.ticket_service import (
+from .ticket_service import (
     create_ticket,
     get_tickets,
     get_ticket_by_id,

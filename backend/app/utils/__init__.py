@@ -1,5 +1,5 @@
-from app.utils.logger import logger
-from app.utils.exceptions import (
+from .logger import logger
+from .exceptions import (
     AppException,
     TicketNotFoundException,
     DatabaseException,
