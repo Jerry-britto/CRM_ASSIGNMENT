@@ -394,3 +394,14 @@ h1, h2, h3, h4, .font-tech {
   text-align: center;
   padding: 32px 0;
 }
+
+@keyframes slideIn {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

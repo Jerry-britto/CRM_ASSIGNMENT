@@ -28,6 +28,7 @@ interface CRMContextType {
   tickets: Ticket[];
   currentPage: PageType;
   activeTicketId: string | null;
+  notification: { message: string; type: 'success' | 'info' | 'danger' } | null;
   addTicket: (ticketData: Omit<Ticket, 'id' | 'ticket_id' | 'status' | 'created_at' | 'updated_at' | 'note'>) => void;
   updateTicket: (ticketId: string, status: TicketStatus, noteText: string) => void;
   deleteTicket: (ticketId: string) => void;
@@ -98,6 +99,17 @@ export const CRMProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [currentPage, setCurrentPage] = useState<PageType>('home');
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'info' | 'danger' } | null>(null);
+
+  // Self-clearing notification timer
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   // Sync state from hash on mount and when browser back/forward buttons are clicked
   useEffect(() => {
@@ -152,6 +164,7 @@ export const CRMProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setTickets(prev => [newTicket, ...prev]);
+    setNotification({ message: `Ticket ${ticket_id} created successfully!`, type: 'success' });
     // Navigate home by changing hash (triggers browser history push and handleHashChange)
     window.location.hash = '';
   };
@@ -176,12 +189,14 @@ export const CRMProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return t;
     }));
+    setNotification({ message: `Ticket ${ticketId} updated successfully!`, type: 'success' });
     // Navigate to detail by changing hash
     window.location.hash = `/detail/${ticketId}`;
   };
 
   const deleteTicket = (ticketId: string) => {
     setTickets(prev => prev.filter(t => t.ticket_id !== ticketId));
+    setNotification({ message: `Ticket ${ticketId} deleted successfully!`, type: 'danger' });
     // Navigate home by changing hash
     window.location.hash = '';
   };
@@ -203,6 +218,7 @@ export const CRMProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       tickets,
       currentPage,
       activeTicketId,
+      notification,
       addTicket,
       updateTicket,
       deleteTicket,

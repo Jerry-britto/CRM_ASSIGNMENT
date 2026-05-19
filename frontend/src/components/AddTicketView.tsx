@@ -11,7 +11,7 @@ export const AddTicketView: React.FC = () => {
   const [description, setDescription] = useState('');
   
   // Validation State
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Email format regex
   const isEmailValid = (email: string) => {
@@ -21,19 +21,39 @@ export const AddTicketView: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validations with minimum lengths
-    if (
-      customerName.trim().length < 2 ||
-      customerEmail.trim().length < 5 ||
-      !isEmailValid(customerEmail) ||
-      subject.trim().length < 5 ||
-      description.trim().length < 10
-    ) {
-      setError(true);
+    // 1. Check if any field is completely empty
+    if (!customerName.trim() || !customerEmail.trim() || !subject.trim() || !description.trim()) {
+      setError('All fields are required');
       return;
     }
 
-    setError(false);
+    // 2. Check minimum length requirements
+    if (customerName.trim().length < 2) {
+      setError('Customer Name must be at least 2 characters');
+      return;
+    }
+
+    if (customerEmail.trim().length < 5) {
+      setError('Customer Email must be at least 5 characters');
+      return;
+    }
+
+    if (!isEmailValid(customerEmail)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    if (subject.trim().length < 5) {
+      setError('Subject must be at least 5 characters');
+      return;
+    }
+
+    if (description.trim().length < 10) {
+      setError('Description must be at least 10 characters');
+      return;
+    }
+
+    setError(null);
 
     // Call service to add the ticket dynamically
     addTicket({
@@ -74,7 +94,7 @@ export const AddTicketView: React.FC = () => {
             <div className="terminal-header" style={{ color: 'rgba(239, 68, 68, 0.5)', borderBottomColor: 'rgba(239, 68, 68, 0.15)' }}>
               <span>[VALIDATION CHECK]</span>
             </div>
-            <div className="terminal-body">All fields are required</div>
+            <div className="terminal-body">{error}</div>
           </div>
         )}
 
