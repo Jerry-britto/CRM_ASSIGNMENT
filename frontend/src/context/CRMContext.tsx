@@ -29,15 +29,17 @@ interface CRMContextType {
   currentPage: PageType;
   activeTicketId: string | null;
   notification: { message: string; type: 'success' | 'info' | 'danger' } | null;
-  addTicket: (ticketData: Omit<Ticket, 'id' | 'ticket_id' | 'status' | 'created_at' | 'updated_at' | 'note'>) => void;
-  updateTicket: (ticketId: string, status: TicketStatus, noteText: string) => void;
-  deleteTicket: (ticketId: string) => void;
+  isSubmitting: boolean;
+  loading: boolean;
+  addTicket: (ticketData: Omit<Ticket, 'id' | 'ticket_id' | 'status' | 'created_at' | 'updated_at' | 'note'>) => Promise<void>;
+  updateTicket: (ticketId: string, status: TicketStatus, noteText: string) => Promise<void>;
+  deleteTicket: (ticketId: string) => Promise<void>;
   navigateTo: (page: PageType, ticketId?: string | null) => void;
 }
 
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
 
-const API_BASE_URL = 'http://localhost:8000/api/tickets';
+const API_BASE_URL = 'https://crmassignment-production.up.railway.app/api/tickets';
 
 const mapApiTicketToFrontend = (apiTicket: any): Ticket => {
   return {
@@ -64,19 +66,25 @@ export const CRMProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentPage, setCurrentPage] = useState<PageType>('home');
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'info' | 'danger' } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const fetchTickets = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/`);
       if (res.ok) {
-        const data = await res.json();
+        const data = await res.json()
+        console.log(`Data: ${data}`)
         const mapped = data.map(mapApiTicketToFrontend);
         setTickets(mapped);
       } else {
         console.error('Failed to fetch tickets from live API');
       }
     } catch (err) {
+      console.log("ERror in fetchTickets", err);
       console.error('Failed to connect to the backend server:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -125,6 +133,7 @@ export const CRMProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const addTicket = async (ticketData: Omit<Ticket, 'id' | 'ticket_id' | 'status' | 'created_at' | 'updated_at' | 'note'>) => {
+    setIsSubmitting(true);
     try {
       const res = await fetch(`${API_BASE_URL}/`, {
         method: 'POST',
@@ -142,10 +151,13 @@ export const CRMProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       console.error(err);
       setNotification({ message: 'Server connection error during ticket creation.', type: 'danger' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const updateTicket = async (ticketId: string, status: TicketStatus, noteText: string) => {
+    setIsSubmitting(true);
     try {
       const res = await fetch(`${API_BASE_URL}/${ticketId}`, {
         method: 'PUT',
@@ -165,10 +177,13 @@ export const CRMProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       console.error(err);
       setNotification({ message: 'Server connection error during ticket update.', type: 'danger' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const deleteTicket = async (ticketId: string) => {
+    setIsSubmitting(true);
     try {
       const res = await fetch(`${API_BASE_URL}/${ticketId}`, {
         method: 'DELETE'
@@ -183,6 +198,8 @@ export const CRMProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       console.error(err);
       setNotification({ message: 'Server connection error during ticket deletion.', type: 'danger' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -204,6 +221,8 @@ export const CRMProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       currentPage,
       activeTicketId,
       notification,
+      isSubmitting,
+      loading,
       addTicket,
       updateTicket,
       deleteTicket,

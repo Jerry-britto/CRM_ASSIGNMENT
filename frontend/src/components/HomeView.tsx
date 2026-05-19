@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCRM, type TicketStatus } from '../context/CRMContext.tsx';
 
 export const HomeView: React.FC = () => {
-  const { tickets, navigateTo } = useCRM();
+  const { tickets, navigateTo, loading } = useCRM();
   const [selectedStatus, setSelectedStatus] = useState<TicketStatus | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -161,7 +161,28 @@ export const HomeView: React.FC = () => {
       </div>
 
       {/* 4. Filter Results List */}
-      {filteredTickets.length > 0 ? (
+      {loading ? (
+        <div className="hud-box" style={{ textAlign: 'center', padding: '60px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
+          <div className="hud-corner corner-tl"></div><div className="hud-corner corner-tr"></div>
+          <div className="hud-corner corner-bl"></div><div className="hud-corner corner-br"></div>
+          
+          <span className="spinner-dot" style={{
+            width: '28px',
+            height: '28px',
+            border: '3px solid rgba(2, 132, 199, 0.1)',
+            borderTopColor: 'var(--border-active)',
+            borderRadius: '50%',
+            display: 'inline-block',
+            animation: 'spin 0.8s linear infinite'
+          }}></span>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <h3 style={{ color: 'var(--text-main)', fontSize: '16px', fontWeight: '600', margin: 0 }}>
+              FETCHING SYSTEM TICKETS...
+            </h3>
+          </div>
+        </div>
+      ) : filteredTickets.length > 0 ? (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
           {filteredTickets.map((ticket) => {
             const statusColor = getStatusColor(ticket.status);
@@ -233,10 +254,17 @@ export const HomeView: React.FC = () => {
       ) : (
         /* Empty State Indicator */
         <div className="hud-box" style={{ textAlign: 'center', padding: '60px 20px', borderStyle: 'dashed' }}>
+          <div className="hud-corner corner-tl"></div><div className="hud-corner corner-tr"></div>
+          <div className="hud-corner corner-bl"></div><div className="hud-corner corner-br"></div>
+          
           <div style={{ color: 'var(--text-muted)', fontSize: '48px', marginBottom: '16px' }}>⚙</div>
-          <h3 style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>No tickets found</h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
-            Modify your filters or enter a different search query.
+          <h3 style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>
+            {tickets.length === 0 ? 'No Tickets Registered' : 'No tickets found'}
+          </h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
+            {tickets.length === 0 
+              ? 'Click the Create Ticket button at the top right to submit your first system record.' 
+              : 'Modify your filters or enter a different search query.'}
           </p>
         </div>
       )}

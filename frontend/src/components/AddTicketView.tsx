@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCRM } from '../context/CRMContext';
 
 export const AddTicketView: React.FC = () => {
-  const { addTicket, navigateTo } = useCRM();
+  const { addTicket, navigateTo, isSubmitting } = useCRM();
 
   // Form State
   const [customerName, setCustomerName] = useState('');
@@ -174,16 +174,34 @@ export const AddTicketView: React.FC = () => {
 
           {/* Action Row */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '20px', borderTop: '1px solid var(--border-dim)', paddingTop: '24px' }}>
-            <button type="button" className="btn-secondary" onClick={() => navigateTo('home')}>
+            <button type="button" className="btn-secondary" onClick={() => navigateTo('home')} disabled={isSubmitting}>
               Cancel
             </button>
-            <button type="submit" className="btn-primary">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                <polyline points="7 3 7 8 15 8"></polyline>
-              </svg>
-              Create Ticket
+            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <span className="spinner-dot" style={{
+                    width: '12px',
+                    height: '12px',
+                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    borderTopColor: '#ffffff',
+                    borderRadius: '50%',
+                    display: 'inline-block',
+                    animation: 'spin 0.8s linear infinite',
+                    marginRight: '8px'
+                  }}></span>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                  </svg>
+                  Create Ticket
+                </>
+              )}
             </button>
           </div>
 

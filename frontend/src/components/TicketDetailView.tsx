@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCRM, type TicketStatus } from '../context/CRMContext';
 
 export const TicketDetailView: React.FC = () => {
-  const { tickets, activeTicketId, deleteTicket, navigateTo } = useCRM();
+  const { tickets, activeTicketId, deleteTicket, navigateTo, isSubmitting } = useCRM();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Find active ticket
@@ -248,18 +248,35 @@ export const TicketDetailView: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px', borderTop: '1px solid var(--border-dim)', paddingTop: '16px' }}>
-              <button className="btn-secondary" style={{ padding: '8px 16px' }} onClick={() => setShowDeleteConfirm(false)}>
+              <button className="btn-secondary" style={{ padding: '8px 16px' }} onClick={() => setShowDeleteConfirm(false)} disabled={isSubmitting}>
                 Cancel
               </button>
               <button 
                 className="btn-danger" 
                 style={{ padding: '8px 16px' }} 
-                onClick={() => {
+                onClick={async () => {
+                  await deleteTicket(ticket.ticket_id);
                   setShowDeleteConfirm(false);
-                  deleteTicket(ticket.ticket_id);
                 }}
+                disabled={isSubmitting}
               >
-                Delete
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner-dot" style={{
+                      width: '12px',
+                      height: '12px',
+                      border: '2px solid rgba(255, 255, 255, 0.3)',
+                      borderTopColor: '#ffffff',
+                      borderRadius: '50%',
+                      display: 'inline-block',
+                      animation: 'spin 0.8s linear infinite',
+                      marginRight: '8px'
+                    }}></span>
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
               </button>
             </div>
           </div>
