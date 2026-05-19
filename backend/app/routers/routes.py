@@ -39,7 +39,19 @@ def list_and_filter_tickets(
     Retrieves all tickets. Supports optional query filters to search by customer name or filter by status.
     """
     tickets = ticket_service.get_tickets(db, status=status, search=search)
-    return tickets
+    return [
+        {
+            "ticket_id": ticket.ticket_id,
+            "customer_name": ticket.customer_name,
+            "customer_email": ticket.customer_email,
+            "subject": ticket.subject,
+            "description": ticket.description,
+            "status": ticket.status,
+            "created_at": ticket.created_at,
+            "notes": ticket.note.note_text if ticket.note else None
+        }
+        for ticket in tickets
+    ]
 
 
 @router.get("/{ticket_id}", response_model=TicketDetailResponse)

@@ -37,69 +37,52 @@ interface CRMContextType {
 
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
 
-const initialTickets: Ticket[] = [
-  {
-    id: 1,
-    ticket_id: 'TKT-001',
-    customer_name: 'Sarah Jenkins',
-    customer_email: 'sarah.j@techcorp.io',
-    subject: 'Database migration timeout on production',
-    description: 'The automated database migration script timed out after 30 seconds while applying indices to the transactions table. The lock contention appears high due to concurrent user traffic during standard operational hours.',
-    status: 'Open',
-    created_at: new Date(Date.now() - 3600000 * 24 * 3).toISOString(), // 3 days ago
-    updated_at: new Date(Date.now() - 3600000 * 24 * 3).toISOString(),
-    note: {
-      id: 101,
-      ticket_id: 1,
-      note_text: 'Investigating the database connection pool size. It seems SQLite is locked due to high concurrent writes. We should temporarily throttle bulk updates.',
-      created_at: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
-    }
-  },
-  {
-    id: 2,
-    ticket_id: 'TKT-002',
-    customer_name: 'David Miller',
-    customer_email: 'd.miller@shopflow.dev',
-    subject: 'Unable to process stripe checkout session callbacks',
-    description: 'We are receiving successful Stripe checkout webhook events (200 OK), but the internal client checkout state remains in "pending". The cart checkout flow is interrupted and clients are experiencing delays in shipping confirmations.',
-    status: 'In Progress',
-    created_at: new Date(Date.now() - 3600000 * 12).toISOString(), // 12 hours ago
-    updated_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-    note: {
-      id: 102,
-      ticket_id: 2,
-      note_text: 'Webhooks are reaching our secondary logging endpoints successfully. However, our main application router is discarding the payload due to a missing session header. Debugging router logic.',
-      created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-    }
-  },
-  {
-    id: 3,
-    ticket_id: 'TKT-003',
-    customer_name: 'Elena Rostova',
-    customer_email: 'elena.r@enterprise.net',
-    subject: 'SSO login authentication failure with Okta integration',
-    description: 'Enterprise SSO federation is throwing error code SSO_403 on logins originating from the Australian office subnet. The redirection flow is broken and users are redirected to a blank login page.',
-    status: 'Closed',
-    created_at: new Date(Date.now() - 3600000 * 24 * 8).toISOString(), // 8 days ago
-    updated_at: new Date(Date.now() - 3600000 * 24 * 6).toISOString(),
-    note: {
-      id: 103,
-      ticket_id: 3,
-      note_text: 'Issue resolved. The redirect URI domain mismatch inside Okta developer portal configuration was updated to match our live regional subdomain. Verified all login handshakes are succeeding now.',
-      created_at: new Date(Date.now() - 3600000 * 24 * 6).toISOString(),
-    }
-  }
-];
+const API_BASE_URL = 'http://localhost:8000/api/tickets';
+
+const mapApiTicketToFrontend = (apiTicket: any): Ticket => {
+  return {
+    id: apiTicket.id || 0,
+    ticket_id: apiTicket.ticket_id,
+    customer_name: apiTicket.customer_name,
+    customer_email: apiTicket.customer_email,
+    subject: apiTicket.subject,
+    description: apiTicket.description,
+    status: apiTicket.status,
+    created_at: apiTicket.created_at,
+    updated_at: apiTicket.created_at,
+    note: apiTicket.notes ? {
+      id: apiTicket.id || 0,
+      ticket_id: apiTicket.id || 0,
+      note_text: apiTicket.notes,
+      created_at: apiTicket.created_at
+    } : null
+  };
+};
 
 export const CRMProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [tickets, setTickets] = useState<Ticket[]>(() => {
-    const saved = localStorage.getItem('crm_tickets');
-    return saved ? JSON.parse(saved) : initialTickets;
-  });
-
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [currentPage, setCurrentPage] = useState<PageType>('home');
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'info' | 'danger' } | null>(null);
+
+  const fetchTickets = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/`);
+      if (res.ok) {
+        const data = await res.json();
+        const mapped = data.map(mapApiTicketToFrontend);
+        setTickets(mapped);
+      } else {
+        console.error('Failed to fetch tickets from live API');
+      }
+    } catch (err) {
+      console.error('Failed to connect to the backend server:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
 
   // Self-clearing notification timer
   useEffect(() => {
@@ -141,64 +124,66 @@ export const CRMProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('crm_tickets', JSON.stringify(tickets));
-  }, [tickets]);
-
-  const addTicket = (ticketData: Omit<Ticket, 'id' | 'ticket_id' | 'status' | 'created_at' | 'updated_at' | 'note'>) => {
-    const nextId = tickets.length > 0 ? Math.max(...tickets.map(t => t.id)) + 1 : 1;
-    const ticketIdNum = tickets.length > 0 ? Math.max(...tickets.map(t => {
-      const match = t.ticket_id.match(/TKT-(\d+)/);
-      return match ? parseInt(match[1]) : 0;
-    })) + 1 : 1;
-    const ticket_id = `TKT-${String(ticketIdNum).padStart(3, '0')}`;
-
-    const newTicket: Ticket = {
-      ...ticketData,
-      id: nextId,
-      ticket_id,
-      status: 'Open',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      note: null
-    };
-
-    setTickets(prev => [newTicket, ...prev]);
-    setNotification({ message: `Ticket ${ticket_id} created successfully!`, type: 'success' });
-    // Navigate home by changing hash (triggers browser history push and handleHashChange)
-    window.location.hash = '';
-  };
-
-  const updateTicket = (ticketId: string, status: TicketStatus, noteText: string) => {
-    setTickets(prev => prev.map(t => {
-      if (t.ticket_id === ticketId) {
-        const existingNote = t.note;
-        const updatedNote: Note | null = noteText.trim() ? {
-          id: existingNote?.id || Math.floor(Math.random() * 10000),
-          ticket_id: t.id,
-          note_text: noteText,
-          created_at: existingNote?.created_at || new Date().toISOString()
-        } : null;
-
-        return {
-          ...t,
-          status,
-          updated_at: new Date().toISOString(),
-          note: updatedNote
-        };
+  const addTicket = async (ticketData: Omit<Ticket, 'id' | 'ticket_id' | 'status' | 'created_at' | 'updated_at' | 'note'>) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ticketData)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotification({ message: `Ticket ${data.ticket_id} created successfully!`, type: 'success' });
+        await fetchTickets();
+        window.location.hash = '';
+      } else {
+        setNotification({ message: 'Failed to create ticket on server.', type: 'danger' });
       }
-      return t;
-    }));
-    setNotification({ message: `Ticket ${ticketId} updated successfully!`, type: 'success' });
-    // Navigate to detail by changing hash
-    window.location.hash = `/detail/${ticketId}`;
+    } catch (err) {
+      console.error(err);
+      setNotification({ message: 'Server connection error during ticket creation.', type: 'danger' });
+    }
   };
 
-  const deleteTicket = (ticketId: string) => {
-    setTickets(prev => prev.filter(t => t.ticket_id !== ticketId));
-    setNotification({ message: `Ticket ${ticketId} deleted successfully!`, type: 'danger' });
-    // Navigate home by changing hash
-    window.location.hash = '';
+  const updateTicket = async (ticketId: string, status: TicketStatus, noteText: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/${ticketId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: status,
+          notes: noteText.trim() || null
+        })
+      });
+      if (res.ok) {
+        setNotification({ message: `Ticket ${ticketId} updated successfully!`, type: 'success' });
+        await fetchTickets();
+        window.location.hash = `/detail/${ticketId}`;
+      } else {
+        setNotification({ message: 'Failed to update ticket status on server.', type: 'danger' });
+      }
+    } catch (err) {
+      console.error(err);
+      setNotification({ message: 'Server connection error during ticket update.', type: 'danger' });
+    }
+  };
+
+  const deleteTicket = async (ticketId: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/${ticketId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setNotification({ message: `Ticket ${ticketId} deleted successfully!`, type: 'danger' });
+        await fetchTickets();
+        window.location.hash = '';
+      } else {
+        setNotification({ message: 'Failed to delete ticket on server.', type: 'danger' });
+      }
+    } catch (err) {
+      console.error(err);
+      setNotification({ message: 'Server connection error during ticket deletion.', type: 'danger' });
+    }
   };
 
   const navigateTo = (page: PageType, ticketId: string | null = null) => {

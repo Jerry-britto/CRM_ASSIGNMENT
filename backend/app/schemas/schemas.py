@@ -20,9 +20,12 @@ class TicketCreateResponse(BaseModel):
 class TicketListResponse(BaseModel):
     ticket_id: str
     customer_name: str
+    customer_email: EmailStr
     subject: str
+    description: str
     status: TicketStatus
     created_at: datetime
+    notes: Optional[str] = None  # Text of the single associated note
 
     class Config:
         from_attributes = True
