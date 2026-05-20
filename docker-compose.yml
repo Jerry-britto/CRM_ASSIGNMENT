@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # 🐍 python FastAPI REST API Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: crm_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/crm.db
+    volumes:
+      # Mount named volume to preserve SQLite database state across restarts
+      - crm_sqlite_data:/app/data
+    restart: always
+
+  # ⚛️ Vite + React SPA Client Web Service (Served via high-performance Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api/tickets
+    container_name: crm_frontend
+    ports:
+      # Map container port 80 (HTTP) to port 3000 on your host machine
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  # Named volume for persistent database storage
+  crm_sqlite_data:

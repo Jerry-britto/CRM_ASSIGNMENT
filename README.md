@@ -104,3 +104,33 @@ cd CRM_ASSIGNMENT
     ```bash
     npm run build
     ```
+
+---
+
+## 🐳 Docker Container Orchestration
+
+To run the entire full-stack application instantly without installing local system dependencies (Python, Node, Uvicorn, etc.), you can orchestrate a production-ready stack in a single command using **Docker Compose**:
+
+### 1. Build and Launch the Containers:
+Run from the project root directory:
+```bash
+docker-compose up --build
+```
+
+### 2. View the Services:
+*   **React Frontend**: Served via Nginx at **`http://localhost:3000`**
+*   **FastAPI Backend**: Active REST API documentation at **`http://localhost:8000/docs`**
+
+### 3. Persistency:
+A named Docker volume `crm_sqlite_data` is configured automatically to preserve SQLite database states across container rebuilds and teardowns.
+
+### 4. Stop the Containers:
+To spin down the orchestration services:
+```bash
+docker-compose down
+```
+
+### 5. Delete volume (clears the database)
+```bash
+docker volume rm crm_sqlite_data
+```

@@ -1,0 +1,14 @@
+# Ignore environment files (Docker uses build args instead)
+.env
+.env.*
+.env.local
+
+# Ignore build artifacts and dependencies (rebuilt inside the container)
+node_modules
+dist
+dist-ssr
+
+# Ignore editor/IDE files
+.vscode
+.idea
+*.sw?
