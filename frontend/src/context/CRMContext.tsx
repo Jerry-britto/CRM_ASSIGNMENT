@@ -39,7 +39,7 @@ interface CRMContextType {
 
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
 
-const API_BASE_URL = 'https://crmassignment-production.up.railway.app/api/tickets';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:8000/api/tickets';
 
 const mapApiTicketToFrontend = (apiTicket: any): Ticket => {
   return {
